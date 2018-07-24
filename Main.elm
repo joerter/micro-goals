@@ -1,47 +1,51 @@
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
+import Time exposing (..)
 
+-- time is always in minutes because the tasks shouldn't
+-- be longer than 60 minutes
 main : Program Never Model Msg
 main =
     Html.beginnerProgram {model = model, view = view, update = update}
 
 type alias Model =
     { nextGoal : String
-    , nextTime : Int
+    , nextTime : Time
     , currentGoal : String
-    , currentTime : Int
+    , currentTime : Time
     }
 
 model : Model
 model =
-    Model "" 0 "" 0
+    Model "" (inSeconds 0) "" (inSeconds 0)
 
 type Msg
-    = Goal String
-    | Time String
+    = NextGoalInput String
+    | NextTimeInput String
     | Start
 
-toIntOrDefault : String -> Int -> Int
-toIntOrDefault string default =
-    String.toInt string |> Result.toMaybe |> Maybe.withDefault default
+toTimeOrDefault : String -> Time -> Time
+toTimeOrDefault string default =
+    String.toFloat string |> Result.toMaybe |> Maybe.withDefault default |> inSeconds
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Goal nextGoal ->
+        NextGoalInput nextGoal ->
             { model | nextGoal = nextGoal }
-        Time nextTime ->
-            { model | nextTime = toIntOrDefault nextTime 0 }
+        NextTimeInput nextTime ->
+            { model | nextTime = toTimeOrDefault nextTime 0 }
         Start ->
             { model | currentGoal = model.nextGoal, currentTime = model.nextTime }
+
 
 view : Model -> Html Msg
 view model =
     div []
         [
-            input [ type_ "text", placeholder "Get stuff done", onInput Goal] []
-            , input [ type_ "number", onInput Time] []
+            input [ type_ "text", placeholder "Get stuff done", onInput NextGoalInput] []
+            , input [ type_ "number", onInput NextTimeInput] []
             , button [ onClick Start] [ text "Do It!"]
             , div []
                 [
